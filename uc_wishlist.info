@@ -1,0 +1,9 @@
+; $Id$
+name = "Wish list/gift registry"
+description = "Allows users to create public shopping or wish lists."
+dependencies[] = uc_store
+dependencies[] = uc_order
+dependencies[] = uc_product
+package = "Ubercart - extra"
+core = 6.x
+php = 5.0
