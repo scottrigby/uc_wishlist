@@ -80,6 +80,17 @@ function uc_wishlist_menu() {
     'file' => 'uc_wishlist.pages.inc',
   );
 
+  $items['user/%user/wishlist'] = array(
+    'title' => 'Wish list',
+    'description' => 'View or modify the contents of your wish list.',
+    'page callback' => 'uc_wishlist_display',
+    'page arguments' => array(1, 'user'),
+    'access callback' => 'user_view_access',
+    'access arguments' => array(1),
+    'file' => 'uc_wishlist.pages.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
   return $items;
 }
 
@@ -442,11 +453,14 @@ function uc_wishlist_get_uid() {
   return $uid;
 }
 
-// Return the wish list ID of the current user.
-function uc_wishlist_get_wid() {
+// Return the wish list ID of the specified user (defaults to current user)
+function uc_wishlist_get_wid($uid = NULL) {
   // Find the wish list matching the authenticated or anonymous user ID.
   // TODO: Handle multiple wishlists?
-  return db_result(db_query("SELECT wid FROM {uc_wishlists} WHERE uid = '%s'", uc_wishlist_get_uid()));
+  if (empty($uid)) {
+    $uid = uc_wishlist_get_uid();
+  }
+  return db_result(db_query("SELECT wid FROM {uc_wishlists} WHERE uid = '%s'", $uid));
 }
 
 /**

@@ -15,7 +15,7 @@
  * @return
  *   HTML output for the wish list display and form.
  */
-function uc_wishlist_display($wid = NULL) {
+function uc_wishlist_display($wid = NULL, $mode = 'wid') {
   global $user;
   $output = '';
 
@@ -23,12 +23,17 @@ function uc_wishlist_display($wid = NULL) {
   // This affects how many parts of the page are rendered.
   $own = FALSE;
 
-  // Default to the current user's wish list if no wishlist ID is specified.
-  if (empty($wid)) {
+  if ($mode == 'user') {
+    // $wid is actually a user account
+    $wid = uc_wishlist_get_wid($wid->uid);
+  }
+  else if (empty($wid)) {
+    // Default to the current user's wish list if no wishlist ID is specified.
     $wid = uc_wishlist_get_wid();
     $own = TRUE;
   }
-  elseif ($wid == uc_wishlist_get_wid()) {
+
+  if (!$own && $wid == uc_wishlist_get_wid()) {
     $own = TRUE;
   }
 
