@@ -273,6 +273,10 @@ function uc_wishlist_view_form($form_state, $items, $wid, $own) {
       '#maxlength' => 6,
       '#disabled' => $own ? FALSE : TRUE
     );
+    if (!$own) {
+      // Disabled elements do not pass their default value.
+      $element['wantqty']['#value'] = $item->qty;
+    }
     $element['haveqty'] = array(
       '#type' => 'textfield',
       '#default_value' => $item->haveqty,
