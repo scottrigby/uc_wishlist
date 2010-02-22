@@ -398,8 +398,13 @@ function uc_wishlist_view_form_submit($form, &$form_state) {
 
     if ($wpid) {
       foreach ($form_state['values']['items'] as $key => $item) {
-        if ($item['wpid'] == $wpid && $item['qty'] == 0) {
-          $form_state['values']['items'][$key]['qty'] = 1;
+        if ($item['wpid'] == $wpid) {
+          if ($item['qty'] == 0) {
+            $form_state['values']['items'][$key]['qty'] = 1;
+          }
+        }
+        else {
+          $form_state['values']['items'][$key]['qty'] = 0;
         }
       }
 
