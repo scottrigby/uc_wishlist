@@ -1,4 +1,3 @@
-; $Id$
 name = "Wish list/gift registry"
 description = "Allows users to create public shopping or wish lists."
 dependencies[] = uc_store
