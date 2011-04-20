@@ -21,6 +21,11 @@ function uc_wishlist_display($wid = NULL, $mode = 'wid') {
   // $own defines whether the wish list is owned by the current user or not.
   // This affects how many parts of the page are rendered.
   $own = FALSE;
+  
+  // Allow users with 'administer wish lists' permission to actually do that.
+  if (user_access('administer wish lists')) {
+    $own = TRUE;
+  }
 
   if ($mode == 'user') {
     // $wid is actually a user account
