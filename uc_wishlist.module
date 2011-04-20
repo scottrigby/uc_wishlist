@@ -298,7 +298,13 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
         $form['panes']['delivery']['delivery_postal_code']['#default_value'] = $wishlist->address->postcode;
         $form['panes']['delivery']['delivery_phone']['#default_value'] = $wishlist->address->phone;
 
-        drupal_set_message(t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list. You may change this address.'));
+        // Don't allow user to access wishlistee's shipping address.
+        $form['panes']['delivery']['#access'] = FALSE;
+        
+        // Don't allow user to copy address (since there's nothing to copy).
+        $form['panes']['billing']['copy_address']['#access'] = FALSE;
+        
+        drupal_set_message(t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list.'));
       }
     }
   }
