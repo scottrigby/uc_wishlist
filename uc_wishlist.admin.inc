@@ -22,6 +22,12 @@ function uc_wishlist_admin_settings_form() {
     '#default_value' => variable_get('uc_wishlist_allow_anonymous', FALSE),
     '#description' => t('Check this box to allow anonymous users to create wish lists. If not checked, anonymous visitors will be prompted to login or register before creating a wish list.'),
   );
+  $form['uc_wishlist_address_privacy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Keep wishlist user address information private.'),
+    '#default_value' => variable_get('uc_wishlist_address_privacy', FALSE),
+    '#description' => t('Check this box to hide wishlist user address information during checkout, checkout review, order history, printable invoice, and email template.'),
+  );
 
   // TODO: add uc_wishlist_default_length
 

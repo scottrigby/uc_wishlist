@@ -287,7 +287,11 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       $wishlist = uc_wishlist_load($wids[0]);
 
       if (!empty($wishlist->address->firstname) && !empty($wishlist->address->lastname) && !empty($wishlist->address->addr1) && !empty($wishlist->address->postcode)) {
-        $form['panes']['delivery']['delivery_first_name']['#default_value'] = $wishlist->address->firstname;
+        // @todo add these values (not #default_value) only if custom address checkbox is unchecked.
+        // @todo add a new submit handler & pass these values in a placeholder form item.
+        // @todo find out what is killing the default uc_cart address behavior? We could add it back if we need to.
+        
+        /*$form['panes']['delivery']['delivery_first_name']['#default_value'] = $wishlist->address->firstname;
         $form['panes']['delivery']['delivery_last_name']['#default_value'] = $wishlist->address->lastname;
         $form['panes']['delivery']['delivery_company']['#default_value'] = $wishlist->address->company;
         $form['panes']['delivery']['delivery_street1']['#default_value'] = $wishlist->address->addr1;
@@ -296,15 +300,29 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
         $form['panes']['delivery']['delivery_country']['#default_value'] = $wishlist->address->country;
         $form['panes']['delivery']['delivery_zone']['#default_value'] = $wishlist->address->zone;
         $form['panes']['delivery']['delivery_postal_code']['#default_value'] = $wishlist->address->postcode;
-        $form['panes']['delivery']['delivery_phone']['#default_value'] = $wishlist->address->phone;
+        $form['panes']['delivery']['delivery_phone']['#default_value'] = $wishlist->address->phone;*/
 
-        // Don't allow user to access wishlistee's shipping address.
-        $form['panes']['delivery']['#access'] = FALSE;
+        $message = t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list.');
         
-        // Don't allow user to copy address (since there's nothing to copy).
-        $form['panes']['billing']['copy_address']['#access'] = FALSE;
+        $address_privacy = variable_get('uc_wishlist_address_privacy', FALSE);
+        if ($address_privacy == TRUE) {
+          // Hide the shipping fields until revealed by our custom checkbox and js.
+          // Since we're hiding default fields until triggered, do not use #attributes. 
+          drupal_add_js(drupal_get_path('module', 'uc_wishlist') . '/uc_wishlist.js');
+          // Trick Ubercart into adding our checkbox, since there's not a decent hook
+          // and so we don't have to add a custom address pane.
+          $form['panes']['delivery']['copy_address'] = array(
+            '#type' => 'checkbox', 
+            '#title' => t('Add a custom delivery address (defaults to wishlist address).'),
+          );
+        }
+        else {
+          // Wishlist user address information is not configured to be private.
+          // Append appropriate directions.
+          $message .= ' '. t('You may change this address.');
+        }
         
-        drupal_set_message(t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list.'));
+        drupal_set_message($message);
       }
     }
   }

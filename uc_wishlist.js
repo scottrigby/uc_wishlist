@@ -35,3 +35,25 @@ function apply_address(type, address_str) {
   $('#edit-' + type + '-zone').val(address.zone).trigger('change');
 }
 
+/**
+ * Behavior for our custom address checkbox.
+ */
+Drupal.behaviors.myModuleBehavior = function (context) {
+	cb=$("#edit-panes-delivery-copy-address");
+	ap=$("#delivery-pane div.address-pane-table");
+	bcaw=$("#edit-panes-billing-copy-address-wrapper");
+	bca=$("#edit-panes-billing-copy-address");
+	if(!cb.is(':checked')){ ap.hide();bcaw.hide(); }
+	cb.click(function(){ 
+		if($(this).is(':checked')){ 
+			ap.slideDown();bcaw.fadeIn(); 
+		}else{ 
+			ap.slideUp();
+			if(bca.is(':checked')){	
+				bca.attr({checked: ''});
+				$("#billing-pane div.address-pane-table").slideDown();	
+			}
+			bcaw.fadeOut();			
+		} 
+	});
+});
