@@ -326,7 +326,7 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
             // Append appropriate directions.
             $message .= ' '. t('You may change this address.');
           }
-          // Set the appropriate message, based on privacy options.
+          // Set the appropriate message, based on privacy options, but only on checkout form.
           drupal_set_message($message);
         }
         break;
@@ -451,6 +451,20 @@ function uc_wishlist_order($op, &$arg1, $arg2) {
           }
           uc_wishlist_update_purchase($witem);
         }
+      }
+      break;
+    
+    case 'load':
+      // Display something friendly on review address if using wishlist address.
+      if (arg(2) == 'review' && $_SESSION['wishlist']['custom_address'] == TRUE) {
+        $o = $arg1;
+        foreach ($o->products as $key => $item) {
+          if ($item->data['wid']) {
+            $wid = $item->data['wid'];
+            $w = uc_wishlist_load($wid);
+          }
+        }
+        $arg1->delivery_first_name = $w->title;
       }
       break;
 

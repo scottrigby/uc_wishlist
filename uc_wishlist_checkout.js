@@ -5,6 +5,8 @@
 
 /**
  * Behavior for our custom address checkbox.
+ *
+ * @todo add comments.
  */
 Drupal.behaviors.myModuleBehavior = function (context) {
   cb = $("#edit-panes-delivery-copy-address");
@@ -18,6 +20,8 @@ Drupal.behaviors.myModuleBehavior = function (context) {
     }
     else {
       ap.slideUp();
+      $("div.address-pane-table input").each(function(){ $(this).attr({value:''}); });
+      $("div.address-pane-table select").not("#edit-panes-delivery-delivery-country").each(function(){ $(this).val($('option:first', this).val()); });      
       if (bca.is(':checked')) {
         bca.attr({checked: ''});
         $("#billing-pane div.address-pane-table").slideDown();
