@@ -268,61 +268,112 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       '#submit' => array('uc_wishlist_add_to_wishlist_submit'),
     );
   }
+    
+  switch ($form_id) {
+    // @todo find a better identifier than $_SESSION['cart_order']. Because this 
+    // is set after going 'back' from cart review.
+    #if ($form_id == 'uc_cart_checkout_form' && !isset($_SESSION['cart_order'])) {
+    case 'uc_cart_checkout_form':
+      $items = unserialize($form['cart_contents']['#value']);
+      $wids = array();
+  
+      foreach ($items as $item) {
+        if ($item->data['wid']) {
+          $wids[] = $item->data['wid'];
+        }
+      }
+      $wids = array_unique($wids);
+  
+      if (count($wids) > 1) {
+        drupal_set_message(t('This order contains items from multiple wish lists. It is not possible to automatically address this order for its recipient.'));
+      }
+      else if (count($wids) == 1) {
+        $wishlist = uc_wishlist_load($wids[0]);
+  
+        if (!empty($wishlist->address->firstname) && !empty($wishlist->address->lastname) && !empty($wishlist->address->addr1) && !empty($wishlist->address->postcode)) {
+          // @todo add these values (not #default_value) only if custom address checkbox is unchecked.
+          
+          // Pass these values in a placeholder form item.
+          // @see uc_wishlist_checkout_form_validate().
+          // Unfortunately this does nothing now. Keep in case we find a way to pass values from submit or validate.
+          /*$form['#wishlist'] = array(
+            'delivery_first_name' => $wishlist->address->firstname,
+            'delivery_last_name' => $wishlist->address->lastname,
+            'delivery_company' => $wishlist->address->company,
+            'delivery_street1' => $wishlist->address->addr1,
+            'delivery_street2' => $wishlist->address->addr2,
+            'delivery_city' => $wishlist->address->city,
+            'delivery_country' => $wishlist->address->country,
+            'delivery_zone' => $wishlist->address->zone,
+            'delivery_postal_code' => $wishlist->address->postcode,
+            'delivery_phone' => $wishlist->address->phone,
+          );*/
+          
+          foreach(element_children($form['panes']['delivery']) as $element) {
+            if ($form['panes']['delivery'][$element]['#required'] == TRUE) {
+              // Unset required, & set class with #attribute, passing validation to our own validator instead.
+              unset($form['panes']['delivery'][$element]['#required']);
+              // Add our own validation flag, so we can see if custom checkbox is selected.
+              $form['panes']['delivery'][$element]['#required_field'] = TRUE;
+              // @todo add class back, so users can see it's required.
+              // This doesn't work becasue of the way the form is themed.
+              #$form['panes']['delivery'][$element]['#attributes'] = array('class' => 'required');
+            }
+          }
+  
+          $message = t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list.');
+          
+          if (variable_get('uc_wishlist_address_privacy', TRUE)) {
+            // Hide the shipping fields until revealed by our custom checkbox and js.
+            // Since we're hiding default fields until triggered, do not use #attributes. 
+            drupal_add_js(drupal_get_path('module', 'uc_wishlist') . '/uc_wishlist_checkout.js');
+            // Trick Ubercart into adding our checkbox, since there's not a decent hook
+            // and so we don't have to add a custom address pane.
+            $form['panes']['delivery']['copy_address'] = array(
+              '#type' => 'checkbox', 
+              '#title' => t('Add a custom delivery address (defaults to wishlist address).'),
+            );
+          }
+          else {
+            // Wishlist user address information is not configured to be private.
+            // Append appropriate directions.
+            $message .= ' '. t('You may change this address.');
+          }
+          
+          drupal_set_message($message);
+          
+          $form['#validate'][] = 'uc_wishlist_checkout_form_validate';
+        }
+        break;
+    }
+  }
+}
 
-  if ($form_id == 'uc_cart_checkout_form' && !isset($_SESSION['cart_order'])) {
-    $items = unserialize($form['cart_contents']['#value']);
-    $wids = array();
-
-    foreach ($items as $item) {
-      if ($item->data['wid']) {
-        $wids[] = $item->data['wid'];
+/**
+ * Custom validation for uc_cart_checkout_form.
+ */
+function uc_wishlist_checkout_form_validate($form, &$form_state) {
+  $values = $form_state['values'];  
+  $custom_address = $values['panes']['delivery']['copy_address'];
+  $exclude = array('delivery_address_select', 'copy_address');
+  foreach(element_children($form['panes']['delivery']) as $element) {        
+    // Check if our custom address box is selected.
+    if ($custom_address) {
+      // Unset custom address $_SESSION variable.
+      unset($_SESSION['wishlist']['custom_address']);
+      // Validate our custom #required_field.
+      if (empty($values['panes']['delivery'][$element]) && $form['panes']['delivery'][$element]['#required_field'] == TRUE) {
+        form_set_error('panes][delivery]['. $element, t('Delivery !name field is required.', array('!name' => $form['panes']['delivery'][$element]['#title'])));
       }
     }
-    $wids = array_unique($wids);
-
-    if (count($wids) > 1) {
-      drupal_set_message(t('This order contains items from multiple wish lists. It is not possible to automatically address this order for its recipient.'));
-    }
-    else if (count($wids) == 1) {
-      $wishlist = uc_wishlist_load($wids[0]);
-
-      if (!empty($wishlist->address->firstname) && !empty($wishlist->address->lastname) && !empty($wishlist->address->addr1) && !empty($wishlist->address->postcode)) {
-        // @todo add these values (not #default_value) only if custom address checkbox is unchecked.
-        // @todo add a new submit handler & pass these values in a placeholder form item.
-        // @todo find out what is killing the default uc_cart address behavior? We could add it back if we need to.
-        
-        /*$form['panes']['delivery']['delivery_first_name']['#default_value'] = $wishlist->address->firstname;
-        $form['panes']['delivery']['delivery_last_name']['#default_value'] = $wishlist->address->lastname;
-        $form['panes']['delivery']['delivery_company']['#default_value'] = $wishlist->address->company;
-        $form['panes']['delivery']['delivery_street1']['#default_value'] = $wishlist->address->addr1;
-        $form['panes']['delivery']['delivery_street2']['#default_value'] = $wishlist->address->addr2;
-        $form['panes']['delivery']['delivery_city']['#default_value'] = $wishlist->address->city;
-        $form['panes']['delivery']['delivery_country']['#default_value'] = $wishlist->address->country;
-        $form['panes']['delivery']['delivery_zone']['#default_value'] = $wishlist->address->zone;
-        $form['panes']['delivery']['delivery_postal_code']['#default_value'] = $wishlist->address->postcode;
-        $form['panes']['delivery']['delivery_phone']['#default_value'] = $wishlist->address->phone;*/
-
-        $message = t('This order contains items from a wish list. The delivery address has been automatically set to the preferred address from the wish list.');
-        
-        $address_privacy = variable_get('uc_wishlist_address_privacy', FALSE);
-        if ($address_privacy == TRUE) {
-          // Hide the shipping fields until revealed by our custom checkbox and js.
-          // Since we're hiding default fields until triggered, do not use #attributes. 
-          drupal_add_js(drupal_get_path('module', 'uc_wishlist') . '/uc_wishlist.js');
-          // Trick Ubercart into adding our checkbox, since there's not a decent hook
-          // and so we don't have to add a custom address pane.
-          $form['panes']['delivery']['copy_address'] = array(
-            '#type' => 'checkbox', 
-            '#title' => t('Add a custom delivery address (defaults to wishlist address).'),
-          );
-        }
-        else {
-          // Wishlist user address information is not configured to be private.
-          // Append appropriate directions.
-          $message .= ' '. t('You may change this address.');
-        }
-        
-        drupal_set_message($message);
+    else {
+      if (!in_array($element, $exclude)) {
+        // Set the values.
+        #$form_item['#parents'] = array('panes', 'delivery', $element);
+        #form_set_value($form_item, $form['#wishlist'][$element], $form_state);
+        // @todo really? UC is overriding this.        
+        #form_set_value($form['panes']['delivery'][$element], $form['#wishlist'][$element], $form_state);
+        $_SESSION['wishlist']['custom_address'] = TRUE;
       }
     }
   }
@@ -396,29 +447,64 @@ function uc_wishlist_cart_item($op, &$item) {
  * updated with the additional purchases.
  */
 function uc_wishlist_order($op, &$arg1, $arg2) {
-  if ($op == 'update') {
-    if (uc_order_status_data($arg1->order_status, 'state') != 'in_checkout' || uc_order_status_data($arg2, 'state') == 'in_checkout' || uc_order_status_data($arg2, 'state') == 'canceled') {
-      return;
-    }
-    $o = $arg1;
-    foreach ($o->products as $key => $item) {
-      if ($item->data['wid'] && $item->data['wpid'] && !isset($item->data['wset'])) {
-        $wid = $item->data['wid'];
-        $wpid = $item->data['wpid'];
-        $w = uc_wishlist_load($wid);
-        $witem = uc_wishlist_get_product($wpid);
-        $purchase = array(
-          'order_id' => $item->order_id,
-          'order_product_id' => $item->order_product_id,
-          'uid' => $o->uid,
-          'date' => time(),
-        );
-        for ($i=0; $i<$item->qty; $i++) {
-          $witem->purchase[] = $purchase;
-        }
-        uc_wishlist_update_purchase($witem);
+  switch ($op) {
+    case 'update':
+      if (uc_order_status_data($arg1->order_status, 'state') != 'in_checkout' || uc_order_status_data($arg2, 'state') == 'in_checkout' || uc_order_status_data($arg2, 'state') == 'canceled') {
+        return;
       }
-    }
+      $o = $arg1;
+      foreach ($o->products as $key => $item) {
+        if ($item->data['wid'] && $item->data['wpid'] && !isset($item->data['wset'])) {
+          $wid = $item->data['wid'];
+          $wpid = $item->data['wpid'];
+          $w = uc_wishlist_load($wid);
+          $witem = uc_wishlist_get_product($wpid);
+          $purchase = array(
+            'order_id' => $item->order_id,
+            'order_product_id' => $item->order_product_id,
+            'uid' => $o->uid,
+            'date' => time(),
+          );
+          for ($i=0; $i<$item->qty; $i++) {
+            $witem->purchase[] = $purchase;
+          }
+          uc_wishlist_update_purchase($witem);
+        }
+      }
+      break;
+
+    case 'submit':
+      // @see uc_cart_checkout_review_form_submit().
+      // $result = $function('submit', $order, NULL);
+      // Why on earth is $arg1 not passing newly set values by ref?
+      // Update db directly instead.
+      // But only if custom address is not set. How can we know from here? $_SESSION.
+      if ($_SESSION['wishlist']['custom_address'] == TRUE) {
+        $o = $arg1;
+        foreach ($o->products as $key => $item) {
+          if ($item->data['wid']) {
+            $wid = $item->data['wid'];
+            $w = uc_wishlist_load($wid);
+            $order = array(
+              'delivery_first_name' => $w->address->firstname,
+              'delivery_last_name' => $w->address->lastname,
+              'delivery_company' => $w->address->company,
+              'delivery_street1' => $w->address->addr1,
+              'delivery_street2' => $w->address->addr2,
+              'delivery_city' => $w->address->city,
+              'delivery_country' => $w->address->country,
+              'delivery_zone' => $w->address->zone,
+              'delivery_postal_code' => $w->address->postcode,
+              'delivery_phone' => $w->address->phone,
+            );
+            // Update the DB directly.
+            $order['order_id'] = $o->order_id;
+            drupal_write_record('uc_orders', $order, 'order_id');
+          }
+        }
+      }
+      
+      break;
   }
 }
 
@@ -664,7 +750,9 @@ function uc_wishlist_add_item($nid, $qty = 1, $data = NULL, $wid = NULL, $msg = 
   if (!$wid || $wid === NULL) {
     $wid = uc_wishlist_create_wishlist();
     if (!$wid) {
-      drupal_set_message(t('Could not create wish list. Adding item failed.'), 'error');
+      if (variable_get('uc_wishlist_allow_anonymous', FALSE)) {
+        drupal_set_message(t('Could not create wish list. Adding item failed.'), 'error');
+      }
       return FALSE;
     }
     $created = TRUE;

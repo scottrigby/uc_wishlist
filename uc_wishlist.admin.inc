@@ -25,7 +25,7 @@ function uc_wishlist_admin_settings_form() {
   $form['uc_wishlist_address_privacy'] = array(
     '#type' => 'checkbox',
     '#title' => t('Keep wishlist user address information private.'),
-    '#default_value' => variable_get('uc_wishlist_address_privacy', FALSE),
+    '#default_value' => variable_get('uc_wishlist_address_privacy', TRUE),
     '#description' => t('Check this box to hide wishlist user address information during checkout, checkout review, order history, printable invoice, and email template.'),
   );
 
