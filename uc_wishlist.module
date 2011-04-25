@@ -464,7 +464,7 @@ function uc_wishlist_order($op, &$arg1, $arg2) {
             $w = uc_wishlist_load($wid);
           }
         }
-        $arg1->delivery_first_name = $w->title;
+        $arg1->delivery_first_name = t('[Address from !title]', array('!title' => $w->title));
       }
       break;
 
