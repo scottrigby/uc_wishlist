@@ -499,6 +499,13 @@ function uc_wishlist_order($op, &$arg1, $arg2) {
   }
 }
 
+/**
+ * Implements Ubercart hook_uc_invoice_templates.
+ */
+function uc_wishlist_uc_invoice_templates() {
+  return array('wishlist');
+}
+
 
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
