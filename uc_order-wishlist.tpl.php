@@ -2,7 +2,7 @@
 
 /**
  * @file
- * This file is the default customer invoice template for Ubercart.
+ * This file is a drop-in customer invoice template for Ubercart Wishlist.
  */
 ?>
 
