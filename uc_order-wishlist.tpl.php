@@ -1,8 +1,9 @@
 <?php
+// $Id: uc_order-customer.tpl.php,v 1.1.2.1 2010/07/16 15:45:09 islandusurper Exp $
 
 /**
  * @file
- * This file is a drop-in customer invoice template for Ubercart Wishlist.
+ * This file is the default customer invoice template for Ubercart.
  */
 ?>
 
@@ -80,20 +81,38 @@
                       <td valign="top" width="50%">
                         <b><?php echo t('Shipping Address:'); ?></b><br />
                         <?php
-                          if ($_SESSION['wishlist']['custom_address'] == TRUE) {
-                            $o = $order;
-                            foreach ($o->products as $key => $item) {
-                              if ($item->data['wid']) {
-                                $wid = $item->data['wid'];
-                                $w = uc_wishlist_load($wid);
-                              }
-                            }
-                            if (isset($w)) {
-                              echo t('[Address from !title]', array('!title' => $w->title));
+                          $o = $order;
+                          // Get order address for comparison.
+                          $map = array(
+                            'firstname' => $o->delivery_first_name,
+                            'lastname' => $o->delivery_last_name,
+                            'company' => $o->delivery_company,
+                            'addr1' => $o->delivery_street1,
+                            'addr2' => $o->delivery_street2,
+                            'city' => $o->delivery_city,
+                            'country' => $o->delivery_country,
+                            'zone' => $o->delivery_zone,
+                            'postcode' => $o->delivery_postal_code,
+                            'phone' => $o->delivery_phone,
+                          );
+                          $o_address = serialize((object)$map);
+                          // Get wishlist address for comparison.
+                          foreach ($o->products as $key => $item) {
+                            if ($item->data['wid']) {
+                              $wid = $item->data['wid'];
+                              $w = uc_wishlist_load($wid);
+                              $w_address = serialize($w->address);
                             }
                           }
+                          // Compare addresses.
+                          if ($w_address == $o_address) {
+                            // Print friendly label.
+                            echo t('[Address from !title]', array('!title' => $w->title));
+                            // Set variable.
+                            $wishlist_address = TRUE;
+                          }
                         ?>
-                        <?php if (!isset($w)) { ?>
+                        <?php if (!isset($wishlist_address)) { ?>
                           <?php echo $order_shipping_address; ?><br />
                           <br />
                           <b><?php echo t('Shipping Phone:'); ?></b><br />
