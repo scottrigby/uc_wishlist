@@ -223,6 +223,13 @@ function uc_wishlist_user($op, &$edit, &$user, $category = NULL) {
         db_query("UPDATE {uc_wishlists} SET uid = %d WHERE wid = %d", $user->uid, $oldwid);
       }
       break;
+    case 'load':
+      $res = db_query("SELECT * FROM {uc_wishlists} WHERE uid = %d", $user->uid);
+      $items = array();
+      while ($obj = db_fetch_object($res)) {
+        $user->wishlist[$obj->wid] = $obj;
+      }
+      break;
     case 'view':
       $res = db_query("SELECT * FROM {uc_wishlists} WHERE uid = %d", $user->uid);
       $items = array();
@@ -274,6 +281,53 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
     // is set after going 'back' from cart review.
     #if ($form_id == 'uc_cart_checkout_form' && !isset($_SESSION['cart_order'])) {
     case 'uc_cart_checkout_form':
+      // Hide previously saved wishlist addresses from the address selector.
+
+      // Load user wishlist addresses.
+      global $user;
+      $account = user_load($user->uid);
+      $uwishlists = $account->wishlist;
+      if (!empty($uwishlists)) {
+        foreach($uwishlists as $wid => $uwishlist) {
+          // Build array of addresses.
+          $uwishlist_addresses[$wid] = $uwishlist->address;
+        }
+      }
+
+      // Get uc_order saved addresses.
+      // Choose this over uc_get_addresses() to be certain of the array position.
+      $options = $form['panes']['delivery']['delivery_address_select']['#options'];
+      // Remove "Please select".
+      unset($options[0]);
+      if (!empty($options)) {
+        foreach($options as $js_option => $label) {
+          // Consider using json_decode().
+          $address = json_decode($js_option);
+          $map = array(
+            'firstname' => $address->first_name,
+            'lastname' => $address->last_name,
+            'company' => $address->company,
+            'addr1' => $address->street1,
+            'addr2' => $address->street2,
+            'city' => $address->city,
+            'country' => $address->country,
+            'zone' => $address->zone,
+            'postcode' => $address->postal_code,
+            'phone' => $address->phone,
+          );
+          // Make the array into a matching object, and serialize.
+          $ucsaved_addresses[$id] = serialize((object)$map);
+          // Compare user wishlist addresses with uc saved addresses.
+          if (in_array($ucsaved_addresses[$id], $uwishlist_addresses)) {
+            unset($form['panes']['delivery']['delivery_address_select']['#options'][$js_option]);
+          }
+        }
+      }
+      // Remove address selector if there are no options.
+      if (count($form['panes']['delivery']['delivery_address_select']['#options']) == 1) {
+        unset($form['panes']['delivery']['delivery_address_select']);
+      }
+
       $items = unserialize($form['cart_contents']['#value']);
       $wids = array();
   
