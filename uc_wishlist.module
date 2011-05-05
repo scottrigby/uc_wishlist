@@ -224,10 +224,15 @@ function uc_wishlist_user($op, &$edit, &$user, $category = NULL) {
       }
       break;
     case 'load':
-      $res = db_query("SELECT * FROM {uc_wishlists} WHERE uid = %d", $user->uid);
+      $res = db_query("SELECT ucop.order_id, ucwlp.nid, ucwl.wid, ucwl.address
+        FROM {uc_orders} uco
+        JOIN {uc_order_products} ucop ON uco.order_id = ucop.order_id
+        JOIN {uc_wishlist_products} ucwlp ON ucop.nid = ucwlp.nid
+        JOIN {uc_wishlists} ucwl ON ucwlp.wid = ucwl.wid
+        WHERE uco.uid = %d", $user->uid);
       $items = array();
       while ($obj = db_fetch_object($res)) {
-        $user->wishlist[$obj->wid] = $obj;
+        $user->wishlist[$obj->order_id] = $obj;
       }
       break;
     case 'view':
@@ -288,11 +293,13 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       $account = user_load($user->uid);
       $uwishlists = $account->wishlist;
       if (!empty($uwishlists)) {
-        foreach($uwishlists as $wid => $uwishlist) {
+        foreach($uwishlists as $order_id => $uwishlist) {
           // Build array of addresses.
-          $uwishlist_addresses[$wid] = $uwishlist->address;
+          $uwishlist_addresses[$order_id] = $uwishlist->address;
         }
       }
+      // Clean up array.
+      $uwishlist_addresses = array_unique($uwishlist_addresses);
 
       // Get uc_order saved addresses.
       // Choose this over uc_get_addresses() to be certain of the array position.
