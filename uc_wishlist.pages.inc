@@ -270,8 +270,7 @@ function uc_wishlist_view_form($form_state, $items, $wid, $own) {
     if ($description) {
       $element['description'] = array('#value' => $description);
     }
-
-    $element['#total'] = $item->price * $item->qty;
+    $element['#total'] = $item->price;
 
     $element['data'] = array('#type' => 'hidden', '#value' => serialize($item->data));
 
@@ -298,12 +297,13 @@ function uc_wishlist_view_form($form_state, $items, $wid, $own) {
       '#default_value' => $item->qty - $item->haveqty > 0 ? $item->qty - $item->haveqty : 1,
       '#size' => 5,
       '#maxlength' => 6,
-    );
-
+      '#disabled' =>  (($item->qty-$item->haveqty)<=0) ? TRUE : FALSE,    
+    );  
     $element['addcart'] = array(
       '#type' => 'submit',
       '#name' => 'addcart-'. $item->wpid,
       '#value' => t('Add to cart'),
+	  '#disabled' =>  (($item->qty-$item->haveqty)<=0) ? TRUE : FALSE,      
     );
 
     $form['items'][] = $element;
@@ -333,7 +333,7 @@ function theme_uc_wishlist_view_form($form) {
 
   $own = isset($form['own']) ? TRUE : FALSE;
 
-  $header = array(t('Products'), '', t('Wanted'), t('Have'), t('Qty.'), t('Purchase'), array('data' => t('Total'), 'align' => 'right'));
+  $header = array(t('Products'), '', t('Wanted'), t('Have'), t('Qty.'), array('data' => t('Price Per Item'), 'align' => 'center'), array('data' => t('Purchase'), 'align' => 'right'));
 
   if ($own) {
     array_unshift($header, t('Remove'));
@@ -350,8 +350,8 @@ function theme_uc_wishlist_view_form($form) {
       $form['items'][$i]['wantqty'] ? drupal_render($form['items'][$i]['wantqty']) : '',
       $form['items'][$i]['haveqty'] ? drupal_render($form['items'][$i]['haveqty']) : '',
       $form['items'][$i]['qty'] ? drupal_render($form['items'][$i]['qty']) : '',
+      array('data' => uc_currency_format($form['items'][$i]['#total']), 'nowrap' => 'nowrap', 'align' => 'center'),      
       $form['items'][$i]['addcart'] ? drupal_render($form['items'][$i]['addcart']) : '',
-      array('data' => uc_currency_format($form['items'][$i]['#total']), 'nowrap' => 'nowrap'),
     );
 
     if (isset($form['items'][$i]['remove'])) {
