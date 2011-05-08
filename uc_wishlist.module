@@ -566,6 +566,9 @@ function uc_wishlist_order($op, &$arg1, $arg2) {
 function uc_wishlist_uc_invoice_templates() {
   return array('wishlist');
 }
+function uc_wishlist_theme_registry_alter(&$theme_registry) {
+  array_unshift($theme_registry['uc_order']['theme paths'], drupal_get_path('module', 'uc_wishlist'));
+}
 
 
 /*******************************************************************************
