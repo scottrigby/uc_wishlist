@@ -223,18 +223,7 @@ function uc_wishlist_user($op, &$edit, &$user, $category = NULL) {
         db_query("UPDATE {uc_wishlists} SET uid = %d WHERE wid = %d", $user->uid, $oldwid);
       }
       break;
-    case 'load':
-      $res = db_query("SELECT ucop.order_id, ucwlp.nid, ucwl.wid, ucwl.address
-        FROM {uc_orders} uco
-        JOIN {uc_order_products} ucop ON uco.order_id = ucop.order_id
-        JOIN {uc_wishlist_products} ucwlp ON ucop.nid = ucwlp.nid
-        JOIN {uc_wishlists} ucwl ON ucwlp.wid = ucwl.wid
-        WHERE uco.uid = %d", $user->uid);
-      $items = array();
-      while ($obj = db_fetch_object($res)) {
-        $user->wishlist[$obj->order_id] = $obj;
-      }
-      break;
+
     case 'view':
       $res = db_query("SELECT * FROM {uc_wishlists} WHERE uid = %d", $user->uid);
       $items = array();
@@ -286,20 +275,13 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
     // is set after going 'back' from cart review.
     #if ($form_id == 'uc_cart_checkout_form' && !isset($_SESSION['cart_order'])) {
     case 'uc_cart_checkout_form':
-      // Hide previously saved wishlist addresses from the address selector.
-
-      // Load user wishlist addresses.
-      global $user;
-      $account = user_load($user->uid);
-      $uwishlists = $account->wishlist;
-      if (!empty($uwishlists)) {
-        foreach($uwishlists as $order_id => $uwishlist) {
-          // Build array of addresses.
-          $uwishlist_addresses[$order_id] = $uwishlist->address;
-        }
+      // Hide any previously saved wishlist addresses from the address selector.
+      // Build array of all wishlist addresses.
+      $uwishlist_addresses = array();
+      $result = db_query("SELECT address FROM {uc_wishlists}");
+      while ($address = db_result($result)) {
+        $uwishlist_addresses[] = $address;
       }
-      // Clean up array.
-      $uwishlist_addresses = array_unique($uwishlist_addresses);
 
       // Get uc_order saved addresses.
       // Choose this over uc_get_addresses() to be certain of the array position.
@@ -308,7 +290,6 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       unset($options[0]);
       if (!empty($options)) {
         foreach($options as $js_option => $label) {
-          // Consider using json_decode().
           $address = json_decode($js_option);
           $map = array(
             'firstname' => $address->first_name,
