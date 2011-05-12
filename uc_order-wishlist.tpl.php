@@ -81,36 +81,11 @@
                       <td valign="top" width="50%">
                         <b><?php echo t('Shipping Address:'); ?></b><br />
                         <?php
-                          $o = $order;
-                          // Get order address for comparison.
-                          $map = array(
-                            'firstname' => $o->delivery_first_name,
-                            'lastname' => $o->delivery_last_name,
-                            'company' => $o->delivery_company,
-                            'addr1' => $o->delivery_street1,
-                            'addr2' => $o->delivery_street2,
-                            'city' => $o->delivery_city,
-                            'country' => $o->delivery_country,
-                            'zone' => $o->delivery_zone,
-                            'postcode' => $o->delivery_postal_code,
-                            'phone' => $o->delivery_phone,
-                          );
-                          $o_address = serialize((object)$map);
-                          // Get wishlist address for comparison.
-                          foreach ($o->products as $key => $item) {
-                            if ($item->data['wid']) {
-                              $wid = $item->data['wid'];
-                              $w = uc_wishlist_load($wid);
-                              $w_address = serialize($w->address);
-                            }
-                          }
-                          // Compare addresses.
-                          if ($w_address == $o_address) {
-                            // Print friendly label.
-                            echo t('[Address from !title]', array('!title' => $w->title));
-                            // Set variable.
-                            $wishlist_address = TRUE;
-                          }
+							$wishlist_title=uc_wishlist_check_order($order);
+							if($wishlist_title != FALSE){
+	                            echo $wishlist_title;
+	                            $wishlist_address = TRUE;	                            
+							}			
                         ?>
                         <?php if (!isset($wishlist_address)) { ?>
                           <?php echo $order_shipping_address; ?><br />
