@@ -28,6 +28,12 @@ function uc_wishlist_admin_settings_form() {
     '#default_value' => variable_get('uc_wishlist_address_privacy', TRUE),
     '#description' => t('Check this box to hide wishlist user address information during checkout, checkout review, order history, printable invoice, and email template.'),
   );
+  $form['uc_wishlist_cart_qty'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Quantity tweak'),
+    '#default_value' => variable_get('uc_wishlist_cart_qty', TRUE),
+    '#description' => t('Change default \'Qty\' from (Wanted - Have) to \'1\' on wishlist pages.'),
+  );
 
   // TODO: add uc_wishlist_default_length
 

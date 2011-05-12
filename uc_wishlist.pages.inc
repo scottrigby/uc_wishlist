@@ -287,18 +287,23 @@ function uc_wishlist_view_form($form_state, $items, $wid, $own) {
     }
     $element['haveqty'] = array(
       '#type' => 'textfield',
-      '#default_value' => $item->haveqty,
+      '#value' => $item->haveqty,
       '#size' => 5,
       '#maxlength' => 6,
       '#disabled' => TRUE
     );
     $element['qty'] = array(
       '#type' => 'textfield',
-      '#default_value' => $item->qty - $item->haveqty > 0 ? $item->qty - $item->haveqty : 1,
+      // Add qty override to admin area to allow user to pick between defaulting to 1 item or use old code which was (Wanted - Have).
+      '#default_value' => (variable_get('uc_wishlist_cart_qty', TRUE)) ? ($item->qty - $item->haveqty > 0 ? 1 : 0) : ($item->qty - $item->haveqty > 0 ? $item->qty - $item->haveqty : 1),
       '#size' => 5,
       '#maxlength' => 6,
       '#disabled' =>  (($item->qty-$item->haveqty)<=0) ? TRUE : FALSE,    
-    );  
+    );
+    if($element['qty']['#disabled'] == TRUE){
+	 	 // Disabled elements do not pass their default value.
+    	$element['qty']['#value'] = $element['qty']['#default_value'];
+    }
     $element['addcart'] = array(
       '#type' => 'submit',
       '#name' => 'addcart-'. $item->wpid,
@@ -333,7 +338,7 @@ function theme_uc_wishlist_view_form($form) {
 
   $own = isset($form['own']) ? TRUE : FALSE;
 
-  $header = array(t('Products'), '', t('Wanted'), t('Have'), t('Qty.'), array('data' => t('Price Per Item'), 'align' => 'center'), array('data' => t('Purchase'), 'align' => 'right'));
+  $header = array(t('Products'), '', t('Wanted'), t('Have'), t('Qty.'), array('data' => t('Price'), 'align' => 'center'), array('data' => t('Purchase'), 'align' => 'center'));
 
   if ($own) {
     array_unshift($header, t('Remove'));
@@ -377,12 +382,22 @@ function uc_wishlist_view_form_validate($form, &$form_state) {
   // If adding item to cart, check quantities.
   if ($wpid) {
     foreach ($form_state['values']['items'] as $key => $item) {
-      if ($item['wpid'] == $wpid && $item['qty'] == 0) {
+      // Is this needed anymore?
+      /*if ($item['wpid'] == $wpid && $item['qty'] == 0) {
         $item['qty'] = 1;
-      }
+      }*/
       if ($item['qty'] && ($item['qty'] + $item['haveqty']) > $item['wantqty']) {
         form_set_error($key, t('You have selected to purchase more items than requested.'));
       }
+      // Checks if value is numeric. also checks if trying to add 0.
+      if (is_numeric($item['qty'])) {
+		     if (($item['wantqty']-$item['haveqty'])>=0 && $item['qty'] == '0' ){
+			     form_set_error($key, t('Quanity of 0 not valid'));
+		     }
+      } 
+      else {
+        form_set_error($key, t('Numeric character only'));      
+      } 
     }
   }
 }
