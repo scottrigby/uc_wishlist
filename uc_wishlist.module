@@ -278,9 +278,9 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       // Hide any previously saved wishlist addresses from the address selector.
       // Build array of all wishlist addresses.
       $uwishlist_addresses = array();
-      $result = db_query("SELECT address FROM {uc_wishlists}");
-      while ($address = db_result($result)) {
-        $uwishlist_addresses[] = $address;
+      $result = db_query("SELECT uid, address FROM {uc_wishlists}");
+      while ($wishlist = db_fetch_object($result)) {
+        $uwishlist_addresses[$wishlist->uid] = $wishlist->address;
       }
 
       // Get uc_order saved addresses.
@@ -289,6 +289,7 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
       // Remove "Please select".
       unset($options[0]);
       if (!empty($options)) {
+        global $user;
         foreach($options as $js_option => $label) {
           $address = json_decode($js_option);
           $map = array(
@@ -306,7 +307,7 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
           // Make the array into a matching object, and serialize.
           $ucsaved_addresses[$id] = serialize((object)$map);
           // Compare user wishlist addresses with uc saved addresses.
-          if (in_array($ucsaved_addresses[$id], $uwishlist_addresses)) {
+          if (in_array($ucsaved_addresses[$id], $uwishlist_addresses) && $ucsaved_addresses[$id] != $uwishlist_addresses[$user->uid]) {
             unset($form['panes']['delivery']['delivery_address_select']['#options'][$js_option]);
           }
         }
