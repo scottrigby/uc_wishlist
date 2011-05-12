@@ -266,6 +266,7 @@ function uc_wishlist_form_alter(&$form, &$form_state, $form_id) {
     $form['wishlist'] = array(
       '#type' => 'submit',
       '#value' => t('Add to wish list'),
+	  '#attributes' => array('class' => 'node-add-to-wishlist'),      
       '#submit' => array('uc_wishlist_add_to_wishlist_submit'),
     );
   }
