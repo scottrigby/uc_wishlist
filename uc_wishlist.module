@@ -554,17 +554,11 @@ function uc_wishlist_theme_registry_alter(&$theme_registry) {
 }
 
 function uc_wishlist_order_pane_alter(&$panes) {
-	//only replace shipping pane on order history page//
-	if(arg(0) == 'user' && is_numeric(arg(1)) && arg(2) == 'order' && is_numeric(arg(3))){
-	  $panes[0] = array(
-		'id' => 'ship_to',
-		'callback' => 'uc_wishlist_pane_ship_to',
-		'title' => t('Ship to'),
-		'desc' => t("Manage the order's shipping address and contact information."),
-		'class' => 'pos-left',
-		'weight' => 1,
-		'show' => array('view', 'edit', 'invoice', 'customer'),
-	  );
+  //find shipping pane before changing callback. only trigger on order history page//
+  if (arg(0) == 'user' && is_numeric(arg(1)) && arg(2) == 'order' && is_numeric(arg(3))) {
+    foreach ($panes as &$pane){
+      if($pane['id'] == 'ship_to'){ $pane['callback'] = 'uc_wishlist_pane_ship_to'; }
+    }
 	}
 }
 
