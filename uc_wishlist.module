@@ -141,7 +141,7 @@ function uc_wishlist_search($op = 'search', $keys = NULL) {
       $links = array();
 
       // Check for user, wish list title, or address matches.
-      $result = db_query("SELECT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' OR w.address LIKE '%%firstname%%%s%%addr1%%' ORDER BY w.title", $keys, $keys, $keys);
+      $result = db_query("SELECT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' ORDER BY w.title", $keys, $keys);
 
       while ($wishlist = db_fetch_object($result)) {
         $results[] = array(
