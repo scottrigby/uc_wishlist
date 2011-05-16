@@ -549,12 +549,20 @@ function uc_wishlist_order($op, &$arg1, $arg2) {
 function uc_wishlist_uc_invoice_templates() {
   return array('wishlist');
 }
+
+/**
+ * Allows tpl to load from module folder if user does not copy tpl to theme folder.
+ */
 function uc_wishlist_theme_registry_alter(&$theme_registry) {
   array_unshift($theme_registry['uc_order']['theme paths'], drupal_get_path('module', 'uc_wishlist'));
 }
 
+/**
+ * Ubercart needs to be patched for order pane alter to work.
+ * @see http://drupal.org/node/970744#comment-3707766.
+ */
 function uc_wishlist_order_pane_alter(&$panes) {
-  //find shipping pane before changing callback. only trigger on order history page//
+  // Find shipping pane before changing callback. Checks url so it only triggers on order history page.
   if (arg(0) == 'user' && is_numeric(arg(1)) && arg(2) == 'order' && is_numeric(arg(3))) {
     foreach ($panes as &$pane){
       if($pane['id'] == 'ship_to'){ $pane['callback'] = 'uc_wishlist_pane_ship_to'; break; }
@@ -563,59 +571,54 @@ function uc_wishlist_order_pane_alter(&$panes) {
 }
 
 //function to check if order is a wishlist order - for tpl and order history shipping pane//
-function uc_wishlist_check_order($order){
-	  $o = $order;
-	  // Get order address for comparison.
-	  $map = array(
-		'firstname' => $o->delivery_first_name,
-		'lastname' => $o->delivery_last_name,
-		'company' => $o->delivery_company,
-		'addr1' => $o->delivery_street1,
-		'addr2' => $o->delivery_street2,
-		'city' => $o->delivery_city,
-		'country' => $o->delivery_country,
-		'zone' => $o->delivery_zone,
-		'postcode' => $o->delivery_postal_code,
-		'phone' => $o->delivery_phone,
-	  );
-	  $o_address = serialize((object)$map);
-	  // Get wishlist address for comparison.
-	  foreach ($o->products as $key => $item) {
-		if ($item->data['wid']) {
-		  $wid = $item->data['wid'];
-		  $w = uc_wishlist_load($wid);
-		  $w_address = serialize($w->address);
-		}
-	  }
-	// Compare addresses.
-	if ($w_address == $o_address) {
-		return t('[Address from !title]', array('!title' => $w->title));
-	}else{
-		return FALSE;
-	}
+function uc_wishlist_check_order($order) {
+  $o = $order;
+  // Get order address for comparison.
+  $map = array(
+    'firstname' => $o->delivery_first_name,
+    'lastname' => $o->delivery_last_name,
+    'company' => $o->delivery_company,
+    'addr1' => $o->delivery_street1,
+    'addr2' => $o->delivery_street2,
+    'city' => $o->delivery_city,
+    'country' => $o->delivery_country,
+    'zone' => $o->delivery_zone,
+    'postcode' => $o->delivery_postal_code,
+    'phone' => $o->delivery_phone,
+  );
+  $o_address = serialize((object)$map);
+  // Get wishlist address for comparison.
+  foreach ($o->products as $key => $item) {
+    if ($item->data['wid']) {
+      $wid = $item->data['wid'];
+      $w = uc_wishlist_load($wid);
+      $w_address = serialize($w->address);
+    }
+  }
+  // Compare addresses.
+  if ($w_address == $o_address) {
+    $output = t('[Address from !title]', array('!title' => $w->title));
+  }
+  
+  return $output;
 }
 
+// Copied function 'uc_order_pane_ship_to' from uc_order.order_pane.inc inside ubercart/uc_order folder. left 'customer' case the same. It seemed to be needed or it wouldn't change the address. Modified 'view' case to check uc_wishlist_address_privacy if true than checks for wishlist title. If order is a wishlist order hide address. If not let switch run through to default.
 function uc_wishlist_pane_ship_to($op, $arg1) {
   switch ($op) {
     case 'customer':
-		$wishlist_title=uc_wishlist_check_order($arg1);
-		if($wishlist_title != FALSE){
-			$output = $wishlist_title;
-		}else{
-		  $output = uc_order_address($arg1, 'delivery') .'<br />'. check_plain($arg1->delivery_phone);				
-		}
-      return $output;
-	default:
-  	  return uc_order_pane_ship_to($op, $arg1);
+      if (!uc_order_is_shippable($arg1)) {
+        return;
+      }
+    case 'view':
+      $wishlist_title = variable_get('uc_wishlist_address_privacy', TRUE) ? uc_wishlist_check_order($arg1) : FALSE;
+      if ($wishlist_title) {
+        return $wishlist_title;
+      }
+    default:
+      return uc_order_pane_ship_to($op, $arg1);
   }
 }
-
-
-
-
-
-
-
 
 /*******************************************************************************
  * Callback Functions, Forms, and Tables
