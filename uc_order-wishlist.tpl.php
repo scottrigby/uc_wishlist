@@ -81,11 +81,11 @@
                       <td valign="top" width="50%">
                         <b><?php echo t('Shipping Address:'); ?></b><br />
                         <?php
-							$wishlist_title=uc_wishlist_check_order($order);
-							if($wishlist_title != FALSE){
-	                            echo $wishlist_title;
-	                            $wishlist_address = TRUE;	                            
-							}			
+            							$wishlist_title=uc_wishlist_check_order($order);
+            							if($wishlist_title != FALSE){
+                            echo $wishlist_title;
+                            $wishlist_address = TRUE;
+            							}
                         ?>
                         <?php if (!isset($wishlist_address)) { ?>
                           <?php echo $order_shipping_address; ?><br />
