@@ -426,7 +426,7 @@ function uc_wishlist_view_form_submit($form, &$form_state) {
 }
 
 // Display the wish list search form.
-function uc_wishlist_search_form($form_state, $keywords = '') {
+function uc_wishlist_search_form($form_state, $keywords = NULL) {
   global $user;
   $form = array();
 
@@ -459,10 +459,7 @@ function uc_wishlist_search_form($form_state, $keywords = '') {
 
   if (!empty($keywords)) {
     // Check for user, wish list title, or address matches.
-    $result = pager_query("SELECT DISTINCT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' OR w.address LIKE '%%firstname%%%s%%addr1%%' ORDER BY w.title", 25, 0, NULL, $keywords, $keywords, $keywords);
-  }
-  else {
-    $result = pager_query("SELECT wid, title FROM {uc_wishlists} ORDER BY title", 25);
+    $result = pager_query("SELECT DISTINCT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' ORDER BY w.title", 25, 0, NULL, $keywords, $keywords, $keywords);
   }
 
   $links = array();
@@ -476,14 +473,22 @@ function uc_wishlist_search_form($form_state, $keywords = '') {
 
   if (!empty($links)) {
     $output = theme_links($links, array('class' => 'wishlist'));
+    $form['output'] = array(
+      '#value' => '<div><h2>'. t('Search results') .'</h2>'. $output .'</div>',
+    );
   }
-  else {
-    $output = t('No wish lists found.');
-  }
+  elseif (!empty($keywords)) {
+    // May as well use D7 noresults text. @see http://drupal.org/node/242048.
+    $output = t('<ul>
+<li>Check if your spelling is correct.</li>
+<li>Remove quotes around phrases to search for each word individually. <em>bike shed</em> will often show more results than <em>&quot;bike shed&quot;</em>.</li>
+<li>Consider loosening your query with <em>OR</em>. <em>bike OR shed</em> will often show more results than <em>bike shed</em>.</li>
+</ul>');
 
-  $form['output'] = array(
-    '#value' => '<div><h2>'. t('Wish lists:') .'</h2>'. $output .'</div>',
-  );
+    $form['output'] = array(
+      '#value' => '<div><h2>'. t('Your search yielded no results') .'</h2>'. $output .'</div>',
+    );
+  }
 
   return $form;
 }
