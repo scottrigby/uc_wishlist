@@ -459,7 +459,7 @@ function uc_wishlist_search_form($form_state, $keywords = NULL) {
 
   if (!empty($keywords)) {
     // Check for user, wish list title, or address matches.
-    $result = pager_query("SELECT DISTINCT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' ORDER BY w.title", 25, 0, NULL, $keywords, $keywords, $keywords);
+    $result = pager_query("SELECT DISTINCT w.wid, w.title FROM {uc_wishlists} AS w JOIN {users} AS u ON w.uid = u.uid WHERE u.name LIKE '%%%s%%' OR w.title LIKE '%%%s%%' ORDER BY w.title", 25, 0, NULL, $keywords, $keywords);
   }
 
   $links = array();
