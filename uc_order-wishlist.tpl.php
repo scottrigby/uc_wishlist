@@ -256,15 +256,13 @@
                               <br />
                             </td>
                           </tr>
-                        
-<?php if($order->gift_wrap['chk'] && $order->gift_wrap['text']){ ?>
-	<tr>
-	  <td colspan="2">
-		<b><?php echo t('Gift card message:'); ?></b>&nbsp;<?php echo $order->gift_wrap['text']; ?>
-	  </td>
-	</tr> 
-<?php } ?>                        
-
+                          <?php if($order->gift_wrap['chk'] && $order->gift_wrap['text']){ ?>
+                        	<tr>
+                            <td colspan="2">
+                              <b><?php echo t('Gift card message:'); ?></b>&nbsp;<?php echo $order->gift_wrap['text']; ?>
+                            </td>
+                        	</tr>
+                          <?php } ?>
                           <?php }
                               }?>
                         </table>
